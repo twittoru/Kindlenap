@@ -1,3 +1,7 @@
 inc/
 Makefile
 META.yml
+out/
+MYMETA.YML
+MYMETA.JSON
+items.json

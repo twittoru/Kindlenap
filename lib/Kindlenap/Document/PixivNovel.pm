@@ -39,8 +39,15 @@ sub scrape {
 
     my $tree = HTML::TreeBuilder::XPath->new_from_content($res->decoded_content);
 
+<<<<<<< HEAD
     my ($content_elem) = $tree->findnodes(q#//div[@name='novel_text']#);
     my $content = join "", map { ref $_ ? "[br]" : $_ } $content_elem->content_list();
+=======
+    my ($content_elem) = $tree->findnodes(q#id('novel_text')#);
+    my $content = join '', map {
+        ref $_ ? ( lc $_->tag eq 'br' ? "\n" : $_->as_text ) : $_
+    } $content_elem->content_list;
+>>>>>>> 2f4fd688e3c3f3ff7162cdf77e6c8cfe6da31390
 
     my $title = $tree->findnodes(q#//div[@class='novel-front-mainHeader']//h1/text()#).q();
        $title =~ s/^\s*|\s*$//g;
