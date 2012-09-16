@@ -40,7 +40,7 @@ sub scrape {
     my $tree = HTML::TreeBuilder::XPath->new_from_content($res->decoded_content);
 
     my ($content_elem) = $tree->findnodes(q#//div[@name='novel_text']#);
-    my $content = $content_elem->as_text;
+    my $content = join "", map { ref $_ ? "[br]" : $_ } $content_elem->content_list();
 
     my $title = $tree->findnodes(q#//div[@class='novel-front-mainHeader']//h1/text()#).q();
        $title =~ s/^\s*|\s*$//g;
@@ -88,7 +88,9 @@ sub rpc_get_illust {
 
 sub _format_content_as_html {
     my ($self, $content_ref) = @_;
+    $$content_ref =~ s#\[br\]#<br />#g;
     $$content_ref =~ s#\[newpage\]#<mbp:pagebreak />#g;
+    $$content_ref =~ s#\[chapter:([^\]]+)\]#<h2>$1</h2>#g;
     $$content_ref =~ s{\[pixivimage:(\d+)\]}{ $self->rpc_get_illust($1) }ge;
 }
 
