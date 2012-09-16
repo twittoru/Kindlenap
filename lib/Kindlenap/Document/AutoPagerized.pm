@@ -16,7 +16,7 @@ sub extract_html_content_from_res {
 sub scrape {
     my $self = shift;
 
-    $self->ua->autopager->load_siteinfo;
+    $self->ua->autopager->load_siteinfo(shift);
 
     my $stop = 0;
 
