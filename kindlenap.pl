@@ -19,6 +19,8 @@ opts my $out_dir => { isa => 'Str',  comment => 'output directroy [out]', defaul
      my $verbose => { isa => 'Bool', comment => 'set verbosity', default => 0 },
      my $xpath   => { isa => 'Str',  comment => 'specify xpath for extract'  },
      my $autopagerize => { isa => 'Bool', comment => 'enable autopagerize', alias => 'A' },
+     my $json => { isa => 'Str', comment => 'autopagerize.json' },
+     my $proxy => { isa => 'Str', comment => 'proxy' },
      my $document_class => { isa => 'Str', comment => 'set document class' };
 
 my $url = shift;
@@ -45,7 +47,8 @@ $document->title($title)   if defined $title;
 $document->author($author) if defined $author;
 $document->xpath($xpath)   if defined $xpath;
 $document->verbose($verbose);
-$document->scrape;
+$document->ua->proxy(['http'],$proxy) if defined $proxy;
+$document->scrape($json);
 
 my $html_file = $document->write;
 print $html_file, "\n";
