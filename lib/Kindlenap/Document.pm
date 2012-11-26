@@ -14,6 +14,8 @@ use Encode::Guess qw(euc-jp shiftjis);
 use Encode::Locale;
 use Path::Class;
 use File::Util qw(escape_filename);
+use Time::Piece;
+use FindBin;
 
 has url => (
     is  => 'rw',
@@ -227,6 +229,38 @@ sub _format_content_as_html {
     # override
 }
 
+sub format_as_opf {
+    my $self = shift;
+
+    my $title   = encode_entities($self->title,  q("&<>)) || '';
+    my $author  = encode_entities($self->author, q("&<>)) || '';
+    my $html = $self->html_file;
+
+    my $date = do { local $ENV{TZ} = 0; localtime()->strftime("%Y-%m-%dT%H:%M:%SZ") };
+    my $cover = Path::Class::File->new($FindBin::Bin, "cover.png");
+
+    return <<__XML__
+<?xml version="1.0"?>
+<package xmlns="http://www.idpf.org/2007/opf" unique-identifier="pub-id" version="3.0" xml:lang="ja">
+  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <dc:title>$title</dc:title>
+    <dc:creator id="creator">$author</dc:creator>
+    <dc:language>ja</dc:language>
+    <meta property="dcterms:modified">$date</meta>
+  </metadata>
+  <manifest>
+    <item id="HTML001" href="$html" media-type="application/xhtml+xml" />
+  </manifest>
+  <x-metadata>
+    <EmbeddedCover>$cover</EmbeddedCover>
+  </x-metadata>
+  <spine page-progression-direction="rtl" toc="ncx">
+    <itemref idref="HTML001" />
+  </spine>
+</package>
+__XML__
+}
+
 sub format_as_html {
     my $self = shift;
 
@@ -238,8 +272,15 @@ sub format_as_html {
 <html>
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta http-equiv="Content-Style-Type" content="text/css">
     <meta name="author" content="$author" />
     <title>$title</title>
+    <style type="test/css">
+    <!--
+body {
+  font-family: sans-serif;
+}
+-->
   </head>
   <body>$content</body>
 </html>
@@ -256,6 +297,11 @@ sub html_file {
     return $self->out_dir->file($self->basename . '.html');
 }
 
+sub opf_file {
+    my $self = shift;
+    return $self->out_dir->file($self->basename . '.opf');
+}
+
 sub download_dir {
     my ($self, %args) = @_;
     return $self->out_dir->subdir($self->basename . '.files');
@@ -270,6 +316,15 @@ sub write {
     open my $fh, '>:utf8', $html_file;
     print $fh $self->format_as_html;
     close $fh;
+
+    {
+        my $opf_file = $self->opf_file;
+        $opf_file->dir->mkpath;
+        open my $fh, '>:utf8', $opf_file;
+        print $fh $self->format_as_opf;
+        close $fh;
+    }
+
 
     return $html_file;
 }
